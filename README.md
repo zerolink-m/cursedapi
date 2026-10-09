@@ -1,5 +1,5 @@
 
-| Code | HTTP Code | Detail|
-|-----|-----|-----|
-| 000 | 200 | Success |
-| 255 | 500 | Server error |
+| Code | HTTP Code | Detail | Is main code |
+|-----|-----|-----|-----|
+| 000 | 200 | Success | Yes, for success
+| 255 | 500 | Server error | Yes, for general server error
