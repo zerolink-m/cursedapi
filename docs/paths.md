@@ -28,11 +28,11 @@ added_at: int
 | Метод | Путь | Действие |
 |-------|------|----------|
 | GET | `/v1/users/bulk/{ids}` | Получение нескольких. `ids` - идентификаторы через запятую: `/v1/users/bulk/1,2,5` |
-| PATCH | `/v1/users/bulk/{ids}` | Изменение нескольких одним телом |
+| PATCH | `/v1/users/bulk/{ids}` | Изменение нескольких одним телом ([requests.md](requests.md)) |
 | DELETE | `/v1/users/bulk/{ids}` | Удаление нескольких |
-| POST | `/v1/users/bulk` | Создание нескольких. Тело - массив объектов |
+| POST | `/v1/users/bulk` | Создание нескольких. Тело - массив объектов ([requests.md](requests.md)) |
 
-Bulk-ответы возвращают код `002` / `004` / `008` (partially) если операция прошла не для всех объектов, а `data` содержит `succeeded` и `failed` (см. [responses.md](responses.md)).
+Bulk-операции атомарны по умолчанию: если хотя бы один объект не прошёл - отклоняется вся операция. Частичное выполнение - только с флагом `partial_allowed` (см. [requests.md](requests.md)). Тогда ответ возвращает код `002` / `004` / `008` (partially), а `data` содержит `succeeded` и `failed` (см. [responses.md](responses.md)).
 
 ### 1.2. Вложенные ресурсы
 

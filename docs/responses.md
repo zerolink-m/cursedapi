@@ -24,6 +24,8 @@
 | Field object (валидация поля) | [objects/field.md](objects/field.md) |
 | Metadata object (служебное) | [objects/metadata.md](objects/metadata.md) |
 
+Тело запроса (приём данных) описано в [requests.md](requests.md): [Request object](objects/request.md) (`data` + `options`) и [Options object](objects/options.md) (`partial_allowed` и кастомные флаги).
+
 Заголовки ответа и `OPTIONS` / `cursed-supported-functions` - в [headers.md](headers.md).
 
 ## Сценарии ответов
@@ -81,6 +83,8 @@ HTTP 200, коды `000`/`003`/`005`/`007`; создание - HTTP 201, код 
 ```
 
 ### Bulk-операции
+
+Атомарны по умолчанию. Частичное выполнение - только с флагом `partial_allowed` (см. [requests.md](requests.md)).
 
 Полный успех - коды `001`/`003`/`007`, `data` содержит массив объектов.
 Частичный успех - коды `002`/`004`/`008` и [Bulk object](objects/bulk.md):

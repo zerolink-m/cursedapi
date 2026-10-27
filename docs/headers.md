@@ -47,6 +47,7 @@ cursed-supported-functions: limit,offset,sort_by,order,search,search_method,sear
 | `expand` | Поддерживается раскрытие связанных объектов через `expand` |
 | `bulk` | Поддерживаются bulk-операции (`/bulk/{ids}`) |
 | `multi_search` | Поддерживаются мультизначения через запятую в `search`/`search_column`/`search_method` |
+| `partial` | Поддерживается флаг `partial_allowed` для bulk-операций (см. [requests.md](requests.md)) |
 | `streaming` | Эндпоинт поддерживает стриминг (код `011`) |
 | `pagination` | Эндпоинт отдаёт `settings.total` и `metadata.page` |
 
