@@ -1,85 +1,175 @@
-# Query-параметры для cursedapi v1.1
+# Query Parameters
 
-Применяются к эндпоинтам получения списка объектов (`GET /v1/users`).
+Query parameters control how the server processes a request. All parameter
+names are lowercase snake_case. Unless stated otherwise, every parameter is
+optional and defaults to disabled.
 
-| key | value | is_required | default | description |
-|-----|-------|-------------|---------|-------------|
-| sort_by | Any from database | No | No | Поле (или поля через запятую), по которому будут сортировать |
-| order | (asc or ascending) or (desc or descending) | No | ascending | Тип сортировки записей |
-| limit | 1-255 | No | 25 | Лимит записей, которые вернутся из БД |
-| offset | 0+ | No | 0 | Сколько записей пропустить. Например, если 10 - пропустит первые 10 и вернёт следующие |
-| search | str | No | No | Значение (или значения через запятую) поиска в БД |
-| search_method | include or exclude or exactly or or | No | include | Метод (или методы через запятую) поиска |
-| search_column | str | if search -> Yes, else -> No | No | Колонка (или колонки через запятую) поиска |
+- [Main Documentation](../README.md)
 
-## Мультизначения через запятую
+## Parameters
 
-`search`, `search_column`, `search_method` и `sort_by` поддерживают несколько значений, разделённых запятой. Значения сопоставляются **позиционно**: первое значение `search` соответствует первому `search_column` и первому `search_method`, и т.д.
+| Parameter | Type | Default | Description |
+|---|---|---|---|
+| `sort_by` | string | none | Field name to sort by. See [Sorting](#sorting). |
+| `order` | string | `asc` | Sort direction: `asc` or `desc`. See [Sorting](#sorting). |
+| `limit` | integer | 25 | Maximum number of items in a list response. Range: 1 to 255. |
+| `offset` | integer | 0 | Number of items to skip before the first returned item. Range: 0 and above. |
+| `search` | string | none | Search value or list of values. See [Multi Search](#multi-search). |
+| `search_column` | string | none | Field name or list of names the search applies to. See [Multi Search](#multi-search). |
+| `search_method` | string | none | Comparison mode or logical connector. See [Multi Search](#multi-search). |
+| `expand` | string | none | Comma separated list of relation names to embed as nested objects. See [Expansion](#expansion). |
+| `partial_allowed` | boolean | `false` | Allows partial success in bulk operations. See [Request Options](requests.md#partial_allowed). |
 
-Пример:
+Limit out of range: `limit > 255` returns code 256. `limit = 0` is treated as
+invalid input and returns code 107. Unknown query parameters are ignored.
+
+## Multi Search
+
+The search parameters work as parallel lists. The i-th value of `search`
+matches the i-th name of `search_column` and the i-th token of
+`search_method`. Each triple describes one condition.
+
+### Lists and Positional Mapping
+
+Values are separated by commas without spaces:
 
 ```
-GET /v1/users?search=john,doe&search_column=name,surname&search_method=exactly,or,include
+search=john,doe
+search_column=name,surname
+search_method=equals,include
 ```
 
-Разбор:
+This selects rows where `name` equals `john` OR `surname` contains `doe`.
 
-| Позиция | search | search_column | search_method |
-|---------|--------|---------------|---------------|
-| 1 | `john` | `name` | `exactly` |
-| 2 | `doe` | `surname` | `or` |
-| 3 | - | - | `include` |
+If `search_column` or `search_method` has a single value while the others
+have several, the single value applies to every condition:
 
-Эквивалент в SQL:
+```
+search=alice,bob
+search_column=email
+search_method=include,include
+```
+
+Both conditions apply to `email`.
+
+### Search Methods
+
+| Method | SQL equivalent |
+|---|---|
+| `equals` | `column = 'value'` |
+| `include` | `column LIKE '%value%'` |
+| `starts` | `column LIKE 'value%'` |
+| `ends` | `column LIKE '%value'` |
+| `exclude` | `column NOT LIKE '%value%'` |
+| `exactly` | `column = 'value'` (same as `equals`, kept for compatibility) |
+
+### Logical Connectors
+
+A connector is not a comparison. It glues the condition built from the
+current triple to the condition built before it. Available connectors:
+
+| Connector | Meaning |
+|---|---|
+| `and` | the previous condition is joined with `AND` |
+| `or` | the previous condition is joined with `OR` |
+| `and_not` | the previous condition is joined with `AND NOT` |
+| `or_not` | the previous condition is joined with `OR NOT` |
+
+The first condition never has a connector: it is the root of the expression.
+A connector is written as the `search_method` token of the condition it
+joins, and that triple contributes no comparison of its own.
+
+Example with several fields:
+
+```
+search=john,doe,jane
+search_column=name,surname,age
+search_method=equals,or,include
+```
+
+SQL equivalent:
 
 ```sql
-SELECT * FROM users WHERE name == 'john' OR surname LIKE '%doe%'
+SELECT * FROM users
+WHERE name = 'john'
+   OR surname LIKE '%doe%'
+  AND age LIKE '%jane%'
 ```
 
-### Правила
+Parentheses are not supported: conditions are evaluated left to right.
 
-1. **Количество значений** `search`, `search_column` и `search_method` должно совпадать, либо `search_method` может быть один (тогда применяется ко всем парам), либо отсутствовать (тогда `include` для всех).
-2. **`or`** - не метод сравнения, а **связка**: условие на этой позиции соединяется с предыдущим через `OR` вместо `AND`. Без `or` все условия соединяются через `AND`.
-3. **Экранирование запятых**: если в искомом значении нужна запятая, значение оборачивается в кавычки `'...'` или `"..."`:
-   - `search='Smith, John',doe` -> значения `Smith, John` и `doe`
-   - `search="1,2"` -> одно значение `1,2`
-4. **Кавычки внутри значения** удваиваются для экранирования: `search='it''s'` -> значение `it's`.
+### Escaping
 
-### Примеры
+- To search for a value that contains a comma, wrap it in quotes:
+  `search='Smith, John'` or `search="1,2"`.
+- Quoted values are never split on commas.
+- To search for a literal value with quotes, double the quotes inside:
+  `search='it''s'`.
+- An unquoted value never contains quotes.
 
-Поиск по одной колонке с исключением:
+### Literal Quotes
 
-```
-GET /v1/users?search=john&search_column=name&search_method=exclude
--- WHERE name NOT LIKE '%john%'
-```
-
-Несколько условий через AND:
+Quotes are syntax, not data. The value `search='test'` is parsed by the
+server as the string `test`, not as `'test'`. To search for the literal
+string `'test'` including the quotes, the client must quote the quotes:
 
 ```
-GET /v1/users?search=john,doe&search_column=name,surname
--- WHERE name LIKE '%john%' AND surname LIKE '%doe%'
+search="'test'"
 ```
 
-Смешанные связки:
+### Empty Positions Are Forbidden
+
+Every position in a list must be filled. Empty positions are a client error
+(code 107):
 
 ```
-GET /v1/users?search=john,doe,jane&search_column=name,surname,name&search_method=exactly,or,exclude
--- WHERE name == 'john' OR surname LIKE '%doe%' OR name NOT LIKE '%jane%'
+WRONG:  search_column=name,,surname
+RIGHT:  search_column=name,surname,age
 ```
 
-Сортировка по нескольким полям:
+If the client does not know a value for a position, it must not include that
+position in the request at all.
+
+## Sorting
+
+One `order` value applies to every `sort_by` column:
 
 ```
-GET /v1/users?sort_by=name,added_at&order=desc
--- ORDER BY name DESC, added_at DESC
+sort_by=created_at,updated_at
+order=desc
 ```
 
-## Методы поиска
+Several `order` values (comma separated) apply positionally, one per column:
 
-| Метод | SQL-эквивалент | Описание |
-|-------|---------------|----------|
-| `include` | `LIKE '%value%'` | Содержит |
-| `exclude` | `NOT LIKE '%value%'` | Не содержит |
-| `exactly` | `== value` | Точное совпадение |
-| `or` | (связка) | Соединяет условие с предыдущим через `OR` |
+```
+sort_by=created_at,updated_at
+order=asc,desc
+```
+
+An invalid direction returns code 107.
+
+## Expansion
+
+`expand` accepts a comma separated list of relation names:
+
+```
+GET /v1/users/1?expand=orders,profile
+```
+
+Expanded relations are embedded as nested objects under the relation name.
+Nested expansion (`expand=orders.items`) is not part of this version.
+An unknown relation returns code 107.
+
+## partial_allowed
+
+`partial_allowed=true` in the query string is equivalent to the same field in
+the `options` object of the request body. The `options` value wins when both
+are present. Details: [Request Options](requests.md#partial_allowed).
+
+## Main Documentation
+
+- [Paths](paths.md)
+- [Responses](responses.md)
+- [Headers](headers.md)
+- [Codes](codes.md)
+- [Requests](requests.md)

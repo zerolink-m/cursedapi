@@ -9,24 +9,24 @@
 | Code | HTTP Code | Detail | Is main code |
 |-----|-----|-----|-----|
 | 000 | 200 | Success. | Yes, for success |
-| 001 | 201 | Created succesfully. | No |
-| 002 | 201 | Partially created succesfully. | No |
-| 003 | 200 | Edited succesfully. | No |
-| 004 | 200 | Partially edited succesfully. | No |
+| 001 | 201 | Created successfully. | No |
+| 002 | 201 | Partially created successfully. Returned only with `partial_allowed=true`. | No |
+| 003 | 200 | Edited successfully. | No |
+| 004 | 200 | Partially edited successfully. Returned only with `partial_allowed=true`. | No |
 | 005 | 200 | Not changed. | No |
 | 006 | 202 | Accepted for work. | No |
-| 007 | 200 | Deleted succesfully. | No |
-| 008 | 200 | Partially deleted succesfully. | No |
-| 010 | 200 | Authorized succesfully. | No |
+| 007 | 200 | Deleted successfully. | No |
+| 008 | 200 | Partially deleted successfully. Returned only with `partial_allowed=true`. | No |
+| 010 | 200 | Authorized successfully. | No |
 | 011 | 200 | Streaming response. | No |
 | 012 | 200 | Empty result. The request is valid, but no records were found. | No |
 | 013 | 200 | Cached response. | No |
 | 014 | 200 | The object is already in the requested state. | No |
-| 015 | 200 | File uploaded succesfully. | No |
-| 016 | 200 | Email sent succesfully. | No |
-| 017 | 200 | Password changed succesfully. | No |
-| 018 | 200 | Logged out succesfully. | No |
-| 019 | 200 | Token refreshed succesfully. | No |
+| 015 | 200 | File uploaded successfully. | No |
+| 016 | 200 | Email sent successfully. | No |
+| 017 | 200 | Password changed successfully. | No |
+| 018 | 200 | Logged out successfully. | No |
+| 019 | 200 | Token refreshed successfully. | No |
 | 020-029 | 2xx | Your any success codes. | - |
 
 ## Редиректы (3xx)
@@ -76,7 +76,7 @@
 | 106 | 414 | URI Too Long. | Yes |
 | 107 | 415 | Unsupported body format. | Yes |
 | 108 | 416 | Range not satisfiable. | Yes |
-| 109 | 422 | Validation error. | Yes |
+| 109 | 422 | Validation error. Yes, for missing required fields in standard endpoints, but a custom endpoint may return code 119 (400) instead. | Yes |
 | 110 | 423 | Locked. | Yes |
 | 111 | 423 | Object locked to edit. | No |
 | 112 | 423 | Object locked to delete. | No |
@@ -113,7 +113,7 @@
 | Code | HTTP Code | Detail | Is main code |
 |-----|-----|-----|-----|
 | 117 | 400 | Invalid JSON body. | No |
-| 118 | 400 | Invalid query parameters. | No |
+| 118 | 400 | Invalid query parameters. For example an empty position in a multi search list (code 107 section in [Query](query.md)). | No |
 | 119 | 400 | A required field is missing. | No |
 | 120 | 400 | Field type mismatch. | No |
 | 121 | 400 | The request body is empty. | No |
@@ -147,6 +147,12 @@
 | 149 | 400 | Invalid token format. | No |
 | 150 | 400 | The token has been revoked. | No |
 | 151 | 400 | The refresh token is missing. | No |
+| 181 | 400 | The requested function is not supported by this API server. See the OPTIONS response (`cursed-supported-functions`). | No |
+| 182 | 400 | The requested function is disabled on this API server. | No |
+| 183 | 400 | Limit value is above the maximum allowed by this API server. | No |
+| 184 | 400 | Expansion is not supported for one or more requested relations. | No |
+| 185 | 400 | The stream was interrupted before completion. | No |
+| 186 | 400 | The request combines functions that cannot be used together. | No |
 | 152 | 400 | Invalid locale or language. | No |
 | 153 | 400 | Unsupported media type for this endpoint. | No |
 | 154 | 400 | The request was cancelled by the client. | No |
@@ -176,6 +182,8 @@
 | 168 | 422 | Empty values are not allowed. | No |
 | 169 | 422 | Invalid nested object. | No |
 | 170 | 422 | Unknown field in the request. | No |
+| 188 | 422 | A multi search list contains an empty position. | No |
+| 189 | 422 | The search values, columns and methods lists have different lengths. | No |
 
 ### Лимиты и блокировки (423 / 429 / 451)
 
@@ -185,6 +193,7 @@
 | 172 | 429 | Too many login attempts. | No |
 | 173 | 429 | Too many requests to this endpoint. | No |
 | 174 | 429 | The upload rate limit has been exceeded. | No |
+| 187 | 429 | The bulk request rate limit has been exceeded. | No |
 | 175 | 451 | The content is not available in your region. | No |
 | 176-200 | 4xx | Your any 4xx code. | - |
 
@@ -205,6 +214,7 @@
 | 211 | 503 | The service is under maintenance. | No |
 | 212 | 503 | The database is starting up. | No |
 | 213 | 504 | The external file service request timed out. | No |
+| 215 | 501 | The expansion feature is not implemented on this server. | No |
 | 214-220 | 500 | Your any 500 code. | - |
 | 221 | 501 | Function not implemented. | Yes |
 | 222 | 502 | Bad gateway. | Yes |
@@ -227,5 +237,10 @@
 | 061-080 | 403 | Кастомные запреты |
 | 087-095 | 404 | Кастомные «не найдено» |
 | 176-200 | 4xx | Кастомные ошибки клиента |
-| 214-220 | 500 | Кастомные ошибки сервера |
+| 214-220 | 500 | Кастомные ошибки сервера (215 занят expansion) |
 | 229-255 | any | Полностью кастомные коды |
+
+Примечание: код 215 взят из диапазона 214-220 под расширяющую функцию спеки
+(expansion). Диапазон кастомных кодов сервера при этом сужен до 216-220.
+
+Примечание: код 187 (429) зарезервирован под bulk rate limit.

@@ -11,7 +11,7 @@
 | request_id | str | UUID запроса (дублирует заголовок `cursed-request-id`) |
 | generated_at | int | Unix timestamp генерации ответа |
 | duration | float | Время обработки запроса в секундах (дублирует `cursed-duration`) |
-| api_version | str | Версия API (например `1.1`) |
+| cursed_version | str | Версия API (например `1.1`) |
 | deprecated | bool | Эндпоинт устарел (дублирует `cursed-deprecation`) |
 | page | object | Пагинация: `{ "current": 1, "pages": 5 }` - вычисляется из `total`/`limit`/`offset` |
 | expand | array of str | Какие связи были раскрыты |
@@ -24,7 +24,7 @@
     "request_id": "550e8400-e29b-41d4-a716-446655440000",
     "generated_at": 1790123456,
     "duration": 0.042,
-    "api_version": "1.1",
+    "cursed_version": "1.1",
     "page": {
         "current": 1,
         "pages": 5

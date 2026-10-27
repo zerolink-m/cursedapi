@@ -86,13 +86,13 @@ HTTP 200, коды `000`/`003`/`005`/`007`; создание - HTTP 201, код 
 
 Атомарны по умолчанию. Частичное выполнение - только с флагом `partial_allowed` (см. [requests.md](requests.md)).
 
-Полный успех - коды `001`/`003`/`007`, `data` содержит массив объектов.
+Полный успех - коды `001`/`003`/`007`, `data` содержит массив объектов. Bulk GET успешен тем же кодом, что и обычный список (`000`).
 Частичный успех - коды `002`/`004`/`008` и [Bulk object](objects/bulk.md):
 
 ```json
 {
     "code": "002",
-    "code_detail": "Partially created succesfully.",
+    "code_detail": "Partially created successfully.",
     "error": {},
     "metadata": {},
     "data": {
@@ -195,6 +195,9 @@ HTTP 4xx/5xx, [Error object](objects/error.md) в `error`, [Field object](object
 ### Стриминг
 
 Для потоковых ответов (SSE, чанки) - код `011`. Каждый чанк/событие - отдельный [Envelope object](objects/envelope.md). `metadata` последнего чанка может содержать `finished: true`.
+
+Спецификация не регулирует заголовок `Accept` и не диктует коды чанков:
+их определяет программист на основе логики своего приложения.
 
 ### Не-JSON ответы
 

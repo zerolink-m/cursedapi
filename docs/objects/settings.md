@@ -15,6 +15,8 @@
 | search_method | str or null | Да | Метод (или методы через запятую) поиска. `null` если не передано |
 | search_column | str or null | Да | Колонка (или колонки через запятую) поиска. `null` если не передано |
 
+Эхо `search_method` включает и логические связки (`and`/`or`/`and_not`/`or_not`) - как передал клиент (см. [query.md](../query.md), Logical Connectors). `expand` и `partial_allowed` в `settings` не эхо-руются: раскрытие связей видно в `data`, а `partial_allowed` - флаг операции, не выборка.
+
 ## Пример
 
 ```json
