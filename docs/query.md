@@ -20,8 +20,8 @@ optional and defaults to disabled.
 | `expand` | string | none | Comma separated list of relation names to embed as nested objects. See [Expansion](#expansion). |
 | `partial_allowed` | boolean | `false` | Allows partial success in bulk operations. See [Request Options](requests.md#partial_allowed). |
 
-Limit out of range: `limit > 255` returns code 256. `limit = 0` is treated as
-invalid input and returns code 107. Unknown query parameters are ignored.
+Limit out of range: `limit > 255` returns code 183 (server maximum). `limit = 0`
+is invalid input and returns code 145. Unknown query parameters are ignored.
 
 ## Multi Search
 
