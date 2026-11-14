@@ -1,4 +1,4 @@
-# Коды для версии cursedapi v1.1
+# Коды для версии cursedapi v1.2
 
 Код - строка из трёх цифр `"XXX"`. Фронтенд определяет сценарий по коду, а не по тексту ошибки.
 
@@ -63,7 +63,7 @@
 | 053 | 403 | You are blocked. | No |
 | 081 | 404 | Not found. | Yes |
 | 082 | 404 | Object not found. | No |
-| 096 | 405 | The method is not permitted for one or more objects. | Yes |
+| 096 | 405 | The method is not permitted for one or more objects. Include the standard `Allow` header listing available methods. | Yes |
 | 097 | 406 | This response format cannot be returned. | Yes |
 | 098 | 408 | The request from the user timed out. | Yes |
 | 099 | 409 | Conflict. | Yes |
@@ -113,7 +113,7 @@
 | Code | HTTP Code | Detail | Is main code |
 |-----|-----|-----|-----|
 | 117 | 400 | Invalid JSON body. | No |
-| 118 | 400 | Invalid query parameters. For example an empty position in a multi search list (code 107 section in [Query](query.md)). | No |
+| 118 | 400 | Invalid query parameters, including malformed or disallowed `filter` expressions (see [Filter](filter.md)). | No |
 | 119 | 400 | A required field is missing. | No |
 | 120 | 400 | Field type mismatch. | No |
 | 121 | 400 | The request body is empty. | No |
@@ -195,7 +195,7 @@
 | 174 | 429 | The upload rate limit has been exceeded. | No |
 | 187 | 429 | The bulk request rate limit has been exceeded. | No |
 | 175 | 451 | The content is not available in your region. | No |
-| 176-200 | 4xx | Your any 4xx code. | - |
+| 176-180, 190-200 | 4xx | Your any 4xx code. | - |
 
 ## Ошибки сервера (5xx)
 
@@ -236,7 +236,7 @@
 | 036-039 | 3xx | Кастомные редиректы |
 | 061-080 | 403 | Кастомные запреты |
 | 087-095 | 404 | Кастомные «не найдено» |
-| 176-200 | 4xx | Кастомные ошибки клиента |
+| 176-180, 190-200 | 4xx | Кастомные ошибки клиента (181-189 заняты стандартом) |
 | 214-220 | 500 | Кастомные ошибки сервера (215 занят expansion) |
 | 229-255 | any | Полностью кастомные коды |
 

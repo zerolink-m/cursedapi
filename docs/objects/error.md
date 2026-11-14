@@ -13,6 +13,8 @@
 | headers | object | Нет | Ошибки по заголовкам: `{ "имя_заголовка": Field object }` |
 | hint | str | Нет | Подсказка, как исправить (от себя) |
 | docs | str | Нет | Ссылка на документацию по этой ошибке (от себя) |
+| request_schema | object | Нет | JSON Schema ожидаемого тела запроса для данного эндпоинта и операции; только доступные этому клиенту поля |
+| request_example | object | Нет | Пример тела запроса в формате [Request object](request.md), соответствующий схеме; образец структуры, а не гарантия успешного выполнения |
 
 `query`, `path` и `headers` заполняются по тем же правилам, что и `fields`:
 значение - [Field object](field.md) с `error` внутри. Присутствуют, только
@@ -81,10 +83,41 @@
 }
 ```
 
+Пример ответа с моделью ожидаемого запроса (фрагмент `error`):
+
+```json
+{
+    "error": "Some fields are invalid",
+    "fields": {
+        "name": { "error": "is required", "required": true, "type": "string" }
+    },
+    "request_schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+            "data": {
+                "type": "object",
+                "required": ["user"],
+                "properties": {
+                    "user": {
+                        "type": "object",
+                        "required": ["name"],
+                        "properties": { "name": { "type": "string", "minLength": 1 } }
+                    }
+                }
+            }
+        }
+    },
+    "request_example": { "data": { "user": { "name": "example" } } }
+}
+```
+
 ## Правила
 
 1. `error` - всегда строка, даже если ошибка сложная; детали - в `fields`/`query`/`path`/`headers`.
 2. `fields` присутствует только при ошибках валидации полей тела (`109`, `119`, `120` и т.п.).
 3. `query`/`path`/`headers` присутствуют только при ошибках в соответствующей части запроса.
-4. `hint` и `docs` опциональны - сервер может их не отдавать.
-5. Для bulk-ошибок используется вложенный Error object внутри [Bulk object](bulk.md) -> `failed[].error`.
+4. `hint`, `docs`, `request_schema` и `request_example` опциональны. Для ошибок валидации тела сервер может приложить схему и пример. `request_schema` — JSON Schema Draft 2020-12 для тела с корнем `data`/`options`; `request_example` соответствует ей. Для ошибок query вместо схемы тела указываются `query`, `hint` и/или `docs`.
+5. Схема и пример описывают текущий эндпоинт, метод и доступные этому клиенту поля; они не должны включать секреты, реальные чужие данные или внутренние поля. Пример не гарантирует прохождения бизнес-правил (например, уникальности). При наличии `cursed-schema-url` можно вместо встроенной схемы дать ссылку в `docs`.
+6. Для bulk-ошибок используется вложенный Error object внутри [Bulk object](bulk.md) -> `failed[].error`; большие схемы не следует дублировать для каждого элемента.

@@ -1,109 +1,87 @@
-# Headers
+# Заголовки cursedapi v1.2
 
-Headers carry specification metadata. Unless stated otherwise, a header is
-sent in every response.
+Заголовки делятся на обязательные, условно обязательные и необязательные. Необязательный заголовок при отсутствии функции **не требуется**: серверу не нужно отправлять `off` для каждой функции. Если сервер всё же явно сообщает состояние функции через соответствующий заголовок, `off` означает «не поддерживается или отключена». Реально включённые функции перечисляются в `cursed-supported-functions` ответа `OPTIONS`.
 
-- [Main Documentation](../README.md)
+## Обязательные
 
-## Response Headers
+| Когда | Заголовок | Пример | Назначение |
+|-------|-----------|--------|------------|
+| Каждый ответ API, включая `OPTIONS` и не-JSON ответы | `cursed-version` | `1.2` | Версия спецификации; `off` недопустим |
+| `OPTIONS` на существующем пути | стандартный `Allow` | `GET, POST, OPTIONS` | Доступные HTTP-методы для этого пути; `OPTIONS` включён |
+| `OPTIONS` на существующем пути | `cursed-supported-functions` | `GET.limit,GET.filter` или `none` | Включённые дополнительные функции с указанием метода; `none`, если их нет |
+| Ответ с JSON-телом | стандартный `Content-Type` | `application/json` | Фактический тип ответа |
+| HTTP 405 (код `096`) | стандартный `Allow` | `GET, OPTIONS` | Допустимые методы, когда запрошенный метод запрещён |
 
-| Header | Example | Description |
-|---|---|---|
-| `cursed-version` | `1.1` | Specification version. If `off`, the function is not supported or disabled on this server. |
-| `cursed-duration` | `0.035` | Request processing time in seconds. If `off`, not supported or disabled. |
-| `cursed-request-id` | `f47ac10b-58cc-4372-a567-0e02b2c3d479` | Unique request identifier. If `off`, not supported or disabled. |
-| `cursed-deprecation` | `true` | Marks the endpoint as deprecated. Absent when the endpoint is current. |
-| `cursed-retry-after` | `30` | Seconds until the client may repeat the request. Sent with codes 114, 172, 173, 174. If `off`, not supported or disabled. |
+`OPTIONS` отвечает на вопрос о возможностях конкретного пути, например `/v1/users/100/avatars`. Доступность метода на одном пути не подразумевает его доступность на других. Если путь не существует, сервер может ответить 404 по общим правилам ошибок.
 
-The exact value format (for example a date instead of seconds in
-`cursed-retry-after`) is up to the server implementation.
+### Синтаксис `cursed-supported-functions`
 
-## Rate Limit Headers
+Элементы разделяются запятыми без пробелов; каждый элемент имеет вид `METHOD.function` (`METHOD` — верхний регистр HTTP-метода, `function` — имя функции). Например:
 
-Rate limit headers are sent when the server uses rate limiting. If rate
-limiting is disabled or not supported, every rate limit header returns `off`.
-
-| Header | Example | Description |
-|---|---|---|
-| `cursed-rate-limit-limit` | `100` | Maximum number of requests in the current window. |
-| `cursed-rate-limit-remaining` | `87` | Remaining requests in the current window. |
-| `cursed-rate-limit-reset` | `1699999999` | Unix timestamp when the window resets. |
-| `cursed-rate-limit-policy` | `100;w=60` | Human readable policy description. Optional. |
-| `cursed-retry-after` | `30` | Seconds until the client may repeat the request. |
-
-When the limit is exhausted the server returns code 114 with the headers
-above.
-
-## Authorization
-
-The client authenticates in one of two ways.
-
-Header method, preferred:
-
-```
-Authorization: TYPE DATA
+```http
+cursed-supported-functions: GET.limit,GET.offset,GET.search,GET.filter
 ```
 
-Query method, for clients that cannot set headers:
+Если дополнительных функций нет, используется ровно `none`, а не пустое значение. Канонические имена функций: `limit`, `offset`, `sort_by`, `order`, `search`, `search_method`, `search_column`, `filter`, `expand`, `bulk`, `multi_search`, `partial`, `streaming`, `pagination`. Дополнительные имена сервиса начинаются с `x-`, например `GET.x-geo-filter`. Функция не наследуется другими методами: `GET.filter` не означает `POST.filter`. Если функция реализована, но выключена, она отсутствует в списке; запрос к ней получает код `182`, если вовсе не реализована — `181`.
 
-```
-GET /v1/users?token=eyh...
-```
+## Условно обязательные
 
-`TYPE` is the authentication scheme name, for example `Bearer`. `DATA` is the
-scheme dependent credential, for example a JWT. The example credential
-`eyh...` is illustrative: any scheme and credential format is valid, the
-specification does not restrict them. Both methods may be combined; the
-header takes precedence.
+| Когда | Заголовок | Пример | Назначение |
+|-------|-----------|--------|------------|
+| `OPTIONS`, когда `filter` включён хотя бы для одного метода | `cursed-schema-url` | `https://api.example.com/v1/schemas/users/avatars` | Адрес схемы шаблона пути с данными по методам, включая разрешённые поля и лимиты фильтра; см. [schema.md](schema.md) |
 
-Examples:
+Для сервера без продвинутого фильтра публикация схемы необязательна. URL выбирает сервер; он может одинаково обслуживать все экземпляры одного шаблона пути. Схема получается через GET, с обычной авторизацией сервиса.
 
-```
+## Необязательные заголовки ответа
+
+| Заголовок | Пример | Назначение |
+|-----------|--------|------------|
+| `cursed-duration` | `0.035` | Время обработки запроса, секунды |
+| `cursed-request-id` | `f47ac10b-58cc-4372-a567-0e02b2c3d479` | Идентификатор запроса |
+| `cursed-deprecation` | `true` | Эндпоинт устарел; если актуален, заголовок отсутствует |
+| `cursed-retry-after` | `30` | Через сколько повторить запрос, в секундах; сервис может документировать другой формат; может сопровождать коды `114`, `172`, `173`, `174` |
+
+### Ограничение частоты
+
+Все заголовки ниже опциональны, в том числе при отсутствии rate limiting; не отправляйте обязательные заглушки `off`. При сообщении лимита значения должны относиться к одному и тому же окну.
+
+| Заголовок | Пример | Назначение |
+|-----------|--------|------------|
+| `cursed-rate-limit-limit` | `100` | Максимум запросов в окне |
+| `cursed-rate-limit-remaining` | `87` | Сколько осталось |
+| `cursed-rate-limit-reset` | `1699999999` | Unix timestamp сброса окна |
+| `cursed-rate-limit-policy` | `100;w=60` | Описание политики |
+| `cursed-retry-after` | `30` | Время до повтора при исчерпании лимита |
+
+При исчерпании лимита сервер возвращает код `114`; заголовки с информацией о лимите передаются, если сервер поддерживает их публикацию.
+
+### Дополнительные заголовки OPTIONS
+
+| Заголовок | Примерные значения | Назначение |
+|-----------|--------------------|------------|
+| `cursed-bulk` | `on` / `off` | Доступность bulk-операций на пути; детали по методам — в `cursed-supported-functions` |
+| `cursed-max-bulk` | `5` / `off` / отсутствует | Максимум объектов в bulk-запросе; `off` — bulk отключён, отсутствие — лимит не опубликован |
+| `cursed-paging` | `on` / `off` | Доступность пагинации |
+| `cursed-paging-max-limit` | `255` / `off` / отсутствует | Максимум `limit`; `off` или отсутствие — максимум не опубликован |
+| `cursed-streaming` | `on` / `off` | Потоковые ответы |
+| `cursed-search` | `on` / `off` | Простой поиск |
+| `cursed-filter` | `on` / `off` | Продвинутый фильтр, выключен по умолчанию |
+| `cursed-auth` | `bearer` / `token` / `custom` / `off` | Способ авторизации; `custom` — только текстовая метка собственной схемы, не спецификация её формата |
+| `cursed-request-type` | `application/json` / `multipart/form-data` / `off` | Поддерживаемый тип тела запроса для этого пути; при нескольких типах — значения через запятую без пробелов |
+| `cursed-response-type` | `application/json` / `application/octet-stream` / `off` | Типы ответов, доступные на этом пути; при нескольких — через запятую без пробелов |
+| `cursed-cache` | `on` / `off` | Серверное кеширование |
+| `cursed-schema-url` | URL | Необязателен, если фильтр не включён; см. выше |
+
+Эти заголовки описывают **возможности**, а не фактическое содержимое текущего обмена. Реальный тип тела указывается стандартным `Content-Type`, а желаемый тип ответа клиент может сообщить стандартным `Accept`. При различиях по методам точные типы определяются [схемой эндпоинта](schema.md); заголовки с типами на уровне пути дают их объединение. `cursed-supported-functions` и схема являются источником истины о доступности конкретной функции для конкретного метода.
+
+## Авторизация запроса
+
+Предпочтительно передавать данные в стандартном заголовке:
+
+```http
 Authorization: Bearer eyh...
-Authorization: Basic dXNlcjpwYXNz
-Authorization: ApiKey 9f2c...
 ```
 
-## OPTIONS
+Альтернатива для клиентов без возможности задать заголовок — `?token=eyh...`. При передаче обоих заголовок имеет приоритет. Схему `Authorization: TYPE DATA` определяет сервис: допустимы, например, `Bearer`, `Basic`, `ApiKey` и собственные схемы. `cursed-auth: custom` в `OPTIONS` не сообщает синтаксис токена или правила доступа — их публикует документация сервиса.
 
-An OPTIONS request describes what the endpoint supports. Two headers are
-mandatory in the response. In their values, elements are separated by
-commas without spaces.
-
-| Header | Example | Description |
-|---|---|---|
-| `cursed-supported-functions` | `limit,offset,search,...` | Comma separated list of supported functions. |
-| `cursed-version` | `1.1` | Specification version. |
-
-### cursed-supported-functions
-
-Canonical names: `limit`, `offset`, `sort_by`, `order`, `search`,
-`search_method`, `search_column`, `expand`, `bulk`, `multi_search`, `partial`,
-`streaming`, `pagination`. Servers may add custom names, which must be
-prefixed with `x-` (for example `x-geo-filter`).
-
-### Other OPTIONS Headers
-
-All headers below are optional. The rules of value `off` are given per
-header. `off` means the function is disabled or not supported.
-
-| Header | Values | Description |
-|---|---|---|
-| `cursed-bulk` | `on` / `off` | Bulk operations on the endpoint. |
-| `cursed-max-bulk` | `5` / `off` / absent | Maximum items in one bulk request. `off` or absence means the function is disabled. |
-| `cursed-paging` | `on` / `off` | Whether offset based paging is available. |
-| `cursed-paging-max-limit` | `255` / `off` / absent | Maximum value of `limit` on the endpoint. `off` or absence means not restricted or unknown. |
-| `cursed-streaming` | `on` / `off` | Streaming responses. |
-| `cursed-search` | `on` / `off` | Search on the endpoint. |
-| `cursed-auth` | `bearer` / `token` / `off` | Accepted authentication methods. |
-| `cursed-accept` | `application/json` / `off` | Response content types the endpoint can produce. |
-| `cursed-cache` | `on` / `off` | Server side caching for the endpoint. |
-
-## Main Documentation
-
-- [Paths](paths.md)
-- [Responses](responses.md)
-- [Query Parameters](query.md)
-- [Codes](codes.md)
-- [Requests](requests.md)
-- [Objects](../README.md#objects)
+См. также [краткую спецификацию](quickstart.md), [схему эндпоинта](schema.md), [запросы](requests.md) и [коды](codes.md).

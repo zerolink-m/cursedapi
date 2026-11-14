@@ -7,6 +7,7 @@
 ```json
 "fields": {
     "name": {
+        "error": "is required",
         "required": true,
         "type": "string"
     }

@@ -1,4 +1,4 @@
-# Формат ответов (CursedJSON) для cursedapi v1.1
+# Формат ответов (CursedJSON) для cursedapi v1.2
 
 Любой JSON-ответ API оборачивается в единый конверт - [Envelope object](objects/envelope.md):
 
@@ -45,11 +45,12 @@ HTTP 200, код `000`
             "total": 42,
             "limit": 25,
             "offset": 0,
-            "order": "ascending",
+            "order": "asc",
             "sort_by": null,
             "search": null,
             "search_method": null,
-            "search_column": null
+            "search_column": null,
+            "filter": null
         },
         "users": [
             {
@@ -191,6 +192,8 @@ HTTP 4xx/5xx, [Error object](objects/error.md) в `error`, [Field object](object
     "data": {}
 }
 ```
+
+При ошибке валидации тела сервер может дополнительно указать `error.request_schema` и `error.request_example` — пример см. в [Error object](objects/error.md). Для ошибки `filter` детали помещаются в `error.query.filter` (код `118`); правила языка — в [filter.md](filter.md).
 
 ### Стриминг
 

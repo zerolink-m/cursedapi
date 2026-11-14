@@ -1,4 +1,4 @@
-# Query Parameters
+# Query Parameters — cursedapi v1.2
 
 Query parameters control how the server processes a request. All parameter
 names are lowercase snake_case. Unless stated otherwise, every parameter is
@@ -16,7 +16,8 @@ optional and defaults to disabled.
 | `offset` | integer | 0 | Number of items to skip before the first returned item. Range: 0 and above. |
 | `search` | string | none | Search value or list of values. See [Multi Search](#multi-search). |
 | `search_column` | string | none | Field name or list of names the search applies to. See [Multi Search](#multi-search). |
-| `search_method` | string | none | Comparison mode or logical connector. See [Multi Search](#multi-search). |
+| `search_method` | string | none | Comparison mode only. See [Multi Search](#multi-search). |
+| `filter` | Base64url string | none | Encoded advanced filter expression; disabled by default. See [Advanced Filter](filter.md). |
 | `expand` | string | none | Comma separated list of relation names to embed as nested objects. See [Expansion](#expansion). |
 | `partial_allowed` | boolean | `false` | Allows partial success in bulk operations. See [Request Options](requests.md#partial_allowed). |
 
@@ -39,10 +40,11 @@ search_column=name,surname
 search_method=equals,include
 ```
 
-This selects rows where `name` equals `john` OR `surname` contains `doe`.
+This selects rows where `name` equals `john` AND `surname` contains `doe`. Conditions in simple search are joined with AND. For OR, NOT and grouping, use [filter](filter.md).
 
-If `search_column` or `search_method` has a single value while the others
-have several, the single value applies to every condition:
+If `search_column` or `search_method` has a single value while `search` has
+several, the single value applies to every condition. Otherwise the lists
+must have equal lengths (code 189 on mismatch):
 
 ```
 search=alice,bob
@@ -63,40 +65,13 @@ Both conditions apply to `email`.
 | `exclude` | `column NOT LIKE '%value%'` |
 | `exactly` | `column = 'value'` (same as `equals`, kept for compatibility) |
 
-### Logical Connectors
+### Combining Conditions
 
-A connector is not a comparison. It glues the condition built from the
-current triple to the condition built before it. Available connectors:
-
-| Connector | Meaning |
-|---|---|
-| `and` | the previous condition is joined with `AND` |
-| `or` | the previous condition is joined with `OR` |
-| `and_not` | the previous condition is joined with `AND NOT` |
-| `or_not` | the previous condition is joined with `OR NOT` |
-
-The first condition never has a connector: it is the root of the expression.
-A connector is written as the `search_method` token of the condition it
-joins, and that triple contributes no comparison of its own.
-
-Example with several fields:
-
-```
-search=john,doe,jane
-search_column=name,surname,age
-search_method=equals,or,include
-```
-
-SQL equivalent:
-
-```sql
-SELECT * FROM users
-WHERE name = 'john'
-   OR surname LIKE '%doe%'
-  AND age LIKE '%jane%'
-```
-
-Parentheses are not supported: conditions are evaluated left to right.
+Every `search_method` value is a comparison method. All conditions in simple
+search are joined with AND; `and`, `or`, `and_not` and `or_not` are **not**
+valid `search_method` values in v1.2. For OR, NOT, grouping and richer
+comparisons, use [filter](filter.md). If both `search` and `filter` are sent,
+their results are intersected (AND).
 
 ### Escaping
 
@@ -120,7 +95,7 @@ search="'test'"
 ### Empty Positions Are Forbidden
 
 Every position in a list must be filled. Empty positions are a client error
-(code 107):
+(code 188):
 
 ```
 WRONG:  search_column=name,,surname
@@ -146,7 +121,7 @@ sort_by=created_at,updated_at
 order=asc,desc
 ```
 
-An invalid direction returns code 107.
+An invalid direction returns code 118.
 
 ## Expansion
 
@@ -158,7 +133,7 @@ GET /v1/users/1?expand=orders,profile
 
 Expanded relations are embedded as nested objects under the relation name.
 Nested expansion (`expand=orders.items`) is not part of this version.
-An unknown relation returns code 107.
+An unknown relation returns code 184.
 
 ## partial_allowed
 
