@@ -6,7 +6,7 @@
 
 1. Реализуйте только нужные пути и методы. Наличие CRUD-ресурса **не требует** всех CRUD-операций, bulk, поиска, пагинации или базы данных. Пример минимального сервера: `GET /v1/health`. Формат путей и вложенных ресурсов — в [paths.md](paths.md).
 2. Любой JSON-ответ отдавайте в [CursedJSON](objects/envelope.md): `code`, `code_detail`, `error`, `metadata`, `data` присутствуют всегда. Не-JSON ответы допускаются там, где это разрешено [правилами путей](paths.md). Код — строка из трёх цифр, соответствующая HTTP-статусу по [таблице](codes.md).
-3. Передавайте `cursed-version: 1.2` в каждом ответе. Если ответ содержит JSON, укажите обычный `Content-Type: application/json`. Правила остальных заголовков — в [headers.md](headers.md).
+3. Передавайте `cursed-version: 1.2` в каждом ответе. Если ответ содержит JSON, укажите обычный `Content-Type: application/json` и код в конверте. Если CursedJSON-тела нет (например, бинарный ответ или HTTP 304), передайте код в `cursed-code`. Правила остальных заголовков — в [headers.md](headers.md).
 4. На существующем пути поддерживайте `OPTIONS` с `Allow` и `cursed-supported-functions`. Первый показывает доступные HTTP-методы, второй — включённые функции по методам. Если дополнительных функций нет: `cursed-supported-functions: none`. При запросе запрещённого метода верните HTTP 405, код `226` и `Allow`.
 5. Если метод принимает JSON-тело, используйте [Request object](objects/request.md): `data` и необязательный `options`. Детали в [requests.md](requests.md). Для ошибок возвращайте понятный [Error object](objects/error.md); схема и пример ожидаемого запроса необязательны.
 
@@ -31,6 +31,7 @@ HTTP/1.1 200 OK
 Allow: GET, OPTIONS
 cursed-version: 1.2
 cursed-supported-functions: none
+cursed-code: 000
 ```
 
 ## Когда нужны дополнительные возможности

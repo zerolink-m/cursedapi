@@ -25,7 +25,7 @@
 |--------|------|----------|
 | Envelope object | [docs/objects/envelope.md](docs/objects/envelope.md) | Корневой конверт любого JSON-ответа |
 | Data object | [docs/objects/data.md](docs/objects/data.md) | Полезная нагрузка: список, одинарный, bulk, virtual |
-| Settings object | [docs/objects/settings.md](docs/objects/settings.md) | Эхо применённых query-параметров + `total` |
+| Settings object | [docs/objects/settings.md](docs/objects/settings.md) | Эхо query-параметров и `total` только для обычного списка коллекции |
 | Bulk object | [docs/objects/bulk.md](docs/objects/bulk.md) | Результат частичной bulk-операции: `succeeded` / `failed` |
 | Error object | [docs/objects/error.md](docs/objects/error.md) | Детали ошибки: `error`, `fields`, `query`, `path`, `headers`, `hint`, `docs` |
 | Field object | [docs/objects/field.md](docs/objects/field.md) | Ошибка валидации одного поля: типы, длины, диапазоны, enum, pattern, nested, items |
