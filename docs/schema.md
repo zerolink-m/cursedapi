@@ -61,7 +61,7 @@ GET по `cursed-schema-url` использует обычную авториз�
               { "code": "000", "content_type": "application/json", "body_schema": {} }
             ],
             "404": [
-              { "code": "082", "content_type": "application/json", "body_schema": {} }
+              { "code": "215", "content_type": "application/json", "body_schema": {} }
             ]
           }
         },
@@ -90,10 +90,10 @@ GET по `cursed-schema-url` использует обычную авториз�
           },
           "responses": {
             "201": [
-              { "code": "001", "content_type": "application/json", "body_schema": {} }
+              { "code": "039", "content_type": "application/json", "body_schema": {} }
             ],
             "422": [
-              { "code": "109", "content_type": "application/json", "body_schema": {} }
+              { "code": "269", "content_type": "application/json", "body_schema": {} }
             ]
           }
         }

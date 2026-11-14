@@ -21,8 +21,8 @@ optional and defaults to disabled.
 | `expand` | string | none | Comma separated list of relation names to embed as nested objects. See [Expansion](#expansion). |
 | `partial_allowed` | boolean | `false` | Allows partial success in bulk operations. See [Request Options](requests.md#partial_allowed). |
 
-Limit out of range: `limit > 255` returns code 183 (server maximum). `limit = 0`
-is invalid input and returns code 145. Unknown query parameters are ignored.
+Limit out of range: `limit > 255` returns code 158 (server maximum). `limit = 0`
+is invalid input and returns code 129. Unknown query parameters are ignored.
 
 ## Multi Search
 
@@ -44,7 +44,7 @@ This selects rows where `name` equals `john` AND `surname` contains `doe`. Condi
 
 If `search_column` or `search_method` has a single value while `search` has
 several, the single value applies to every condition. Otherwise the lists
-must have equal lengths (code 189 on mismatch):
+must have equal lengths (code 300 on mismatch):
 
 ```
 search=alice,bob
@@ -95,7 +95,7 @@ search="'test'"
 ### Empty Positions Are Forbidden
 
 Every position in a list must be filled. Empty positions are a client error
-(code 188):
+(code 297):
 
 ```
 WRONG:  search_column=name,,surname
@@ -121,7 +121,7 @@ sort_by=created_at,updated_at
 order=asc,desc
 ```
 
-An invalid direction returns code 118.
+An invalid direction returns code 066.
 
 ## Expansion
 
@@ -133,7 +133,7 @@ GET /v1/users/1?expand=orders,profile
 
 Expanded relations are embedded as nested objects under the relation name.
 Nested expansion (`expand=orders.items`) is not part of this version.
-An unknown relation returns code 184.
+An unknown relation returns code 160.
 
 ## partial_allowed
 

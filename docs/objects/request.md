@@ -63,4 +63,4 @@ Bulk-операция:
 2. Именование ключей в `data` зеркально ответу: единственное число для одинарных операций (`user`), множественное для bulk (`users`).
 3. `options` перекрывает одноимённые query-параметры (см. [requests.md](../requests.md)).
 4. Для реализованных стандартных CRUD POST/PATCH тело обязательно; для DELETE — опционально. Кастомные и virtual-эндпоинты могут задавать другие требования.
-5. Content-Type: `application/json` обязателен для JSON-тел. Иначе - код `107` (Unsupported body format).
+5. Content-Type: `application/json` обязателен для JSON-тел. Иначе - код `264` (Unsupported body format).
